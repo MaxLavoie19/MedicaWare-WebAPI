@@ -1,0 +1,37 @@
+{
+  "name": "medicaware-webapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "@types/express": "^4.17.0",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "jasmine-node": "^3.0.0",
+    "request": "^2.88.0",
+    "ts-node-dev": "^1.0.0-pre.40",
+    "ts-postgres": "^1.1.0",
+    "typescript": "^3.5.3"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^3.3.13",
+    "gts": "^1.0.0",
+    "jasmine": "^3.4.0",
+    "ts-node": "^8.3.0",
+    "typescript": "~3.4.0"
+  },
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpileOnly ./src/app.ts",
+    "prod": "tsc && node ./build/app.js",
+    "test": "ts-node node_modules/jasmine/bin/jasmine",
+    "check": "gts check",
+    "clean": "gts clean",
+    "compile": "tsc -p .",
+    "fix": "gts fix",
+    "prepare": "npm run compile",
+    "pretest": "npm run compile",
+    "posttest": "npm run check"
+  },
+  "author": "",
+  "license": "ISC"
+}

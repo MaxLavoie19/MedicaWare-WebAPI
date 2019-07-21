@@ -2,6 +2,8 @@ import { from, BehaviorSubject, forkJoin, Observable } from 'rxjs';
 
 import { Json } from "../types/json";
 import { NamedParamClient } from "../named-param-client/named-param-client";
+import { EventDictionary } from '../event-dictionary/event-dictionary';
+import { EventTree } from '../event-tree/event-tree';
 
 export class DataAccessObject {
   private client: NamedParamClient;
@@ -27,11 +29,14 @@ export class DataAccessObject {
     `);
   }
 
-  getVisit(visitId: number): BehaviorSubject<Json> {
-    const visitObservable = new BehaviorSubject<Json>({});
+  getVisit(visitId: number, eventDict: EventDictionary): Json {
+    const eventTree = new EventTree(eventDict);
     const visitQueryObservable = from(this.fetchVisit(visitId));
+    eventTree.setEvent('visit', visitQueryObservable);
     visitQueryObservable.subscribe(async (visitQueryResult) => {
       const visit = visitQueryResult[0];
+      const newEventTree = new EventTree(eventDict);
+      newEventTree.setJson('visit', visit);
       const admissionId = Number(visit.hadm_id);
 
       const observableObj: {[name: string]: Observable<Json[]>} = {
@@ -50,16 +55,16 @@ export class DataAccessObject {
         notes: this.fetchNotes(admissionId),
         services: this.fetchServices(admissionId),
       };
-      visitObservable.next(observableObj);
-      const keyList = Object.keys(observableObj);
-      const promisesList = keyList.map(key => observableObj[key]);
-      forkJoin(promisesList).subscribe((valueList) => {
-        keyList.forEach((key, index) => visit[key] = valueList[index]);
-        visitObservable.next(visit);
-        visitObservable.complete();
+      Object.keys(observableObj).forEach((key) => {
+        const observable = observableObj[key];
+        newEventTree.setEvent(key, observable);
+        observable.subscribe((value: Json[]) => {
+          newEventTree.setJson(key, value);
+        });
       });
+      eventTree.setSubtree('visit', newEventTree);
     });
-    return visitObservable;
+    return eventTree.toJson();
   }
 
   private fetchVisit(visitId: number): Observable<Json[]> {

@@ -9,6 +9,7 @@
     "express": "^4.17.1",
     "jasmine-node": "^3.0.0",
     "request": "^2.88.0",
+    "rxjs": "^6.5.2",
     "ts-node-dev": "^1.0.0-pre.40",
     "ts-postgres": "^1.1.0",
     "typescript": "^3.5.3"

@@ -1,46 +1,22 @@
 import { Json } from "../types/json";
-import { Client, Value } from "ts-postgres";
+import { DataAccessObject } from "../data-access-object/data-access-object";
+import { Observable, from } from "rxjs";
 
 export class PostgresToJsonService {
-  private mimicClient: Client;
-  constructor(mimicClient: Client) {
-    this.mimicClient = mimicClient;
+  private dataAccessObject: DataAccessObject;
+  constructor(dataAccessObject: DataAccessObject) {
+    this.dataAccessObject = dataAccessObject;
   }
 
-  async getDataset(): Promise<Json[]> {
-    return [];
+  getDataset(): Observable<Json[]> {
+    return from([]);
   }
 
-  async getVisit(visitId: number): Promise<Json> {
-    const admissions = await this.mimicClient.query(`
-      SELECT *
-      FROM noteevents
-      WHERE row_id=$1
-    `, [visitId]);
-    const admissionObjects: Json[] = [];
-    admissions.rows.forEach((row: Value[]) => {
-      const admission: Json = {};
-      admissions.names.forEach((name: string, index) => {
-        admission[name] = row[index];
-      });
-      admissionObjects.push(admission);
-    });
-    return admissionObjects[0];
+  getVisit(visitId: number): Observable<Json> {
+    return this.dataAccessObject.getVisit(visitId);
   }
 
-  async getVisits(): Promise<Json[]> {
-    const admissions = await this.mimicClient.query(`
-      SELECT *
-      FROM noteevents
-    `);
-    const admissionObjects: Json[] = [];
-    admissions.rows.forEach((row: Value[]) => {
-      const admission: Json = {};
-      admissions.names.forEach((name: string, index) => {
-        admission[name] = row[index];
-      });
-      admissionObjects.push(admission);
-    });
-    return admissionObjects;
+  getVisits(): Promise<Json[]> {
+    return this.dataAccessObject.getTable('admissions');
   }
 }

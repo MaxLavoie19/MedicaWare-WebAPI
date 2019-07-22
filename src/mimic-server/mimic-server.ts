@@ -6,21 +6,19 @@ import { PostgresToJsonService } from '../postgres-to-json/postgres-to-json.serv
 import { NamedParamClient } from '../named-param-client/named-param-client';
 import { DataAccessObject } from '../data-access-object/data-access-object';
 import { BehaviorSubject, Observable, Observer } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { filter, debounceTime } from 'rxjs/operators';
 import { EventDictionary } from '../event-dictionary/event-dictionary';
 
 export class MimicServer {
   private app = new BehaviorSubject<express.Application | null>(null);
-  private server: Server;
   private mimicClient: NamedParamClient | null = null;
-  private io: SocketIO.Server;
+  private server?: Server;
+  private io?: SocketIO.Server;
   private eventDict: EventDictionary;
 
   constructor() {
     this.eventDict = new EventDictionary();
     const app = express();
-    this.server = createServer(app);
-    this.io = socketIo(this.server);
     this.listen(app);
   }
 
@@ -38,6 +36,14 @@ export class MimicServer {
     this.mimicClient = await this.initDatabaseConnection();
     const dataAccessObject = new DataAccessObject(this.mimicClient);
     const postgresToJsonService = new PostgresToJsonService(dataAccessObject);
+
+    app.use((_req, res, next) => {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      next();
+    })
 
     app.get('/dataset', async (_req, res) => {
       let response: string;
@@ -66,20 +72,27 @@ export class MimicServer {
       res.send(response);
     });
 
-    app.listen(4040, () => {
-      console.log('Example app listening on port 4040');
+    this.server = createServer(app);
+    this.io = socketIo(this.server);
+
+    this.server.listen(4040, () => {
+      console.log('Mimic app listening on port 4040');
     });
 
     this.io.on('connect', (socket: SocketIO.Socket) => {
       console.log('new client connected');
-      socket.on('listen', (guid: string) => {
-        console.log(guid);
+      socket.on('subscribe', (guid: string) => {
+        this.eventDict.getEvent(guid)
+        .pipe(debounceTime(500))
+        .subscribe((value) => {
+          console.log(value);
+          socket.emit('update', value);
+        });
       });
       socket.on('disconnect', () => {
           console.log('Client disconnected');
       });
     });
-
     this.app.next(app);
   }
 

@@ -35,8 +35,6 @@ export class DataAccessObject {
     eventTree.setEvent('visit', visitQueryObservable);
     visitQueryObservable.subscribe(async (visitQueryResult) => {
       const visit = visitQueryResult[0];
-      const newEventTree = new EventTree(eventDict);
-      newEventTree.setJson('visit', visit);
       const admissionId = Number(visit.hadm_id);
 
       const observableObj: {[name: string]: Observable<Json[]>} = {
@@ -57,12 +55,9 @@ export class DataAccessObject {
       };
       Object.keys(observableObj).forEach((key) => {
         const observable = observableObj[key];
-        newEventTree.setEvent(key, observable);
-        observable.subscribe((value: Json[]) => {
-          newEventTree.setJson(key, value);
-        });
+        eventTree.setEvent(key, observable);
       });
-      eventTree.setSubtree('visit', newEventTree);
+      eventTree.setSubtree('visit', eventTree);
     });
     return eventTree.toJson();
   }

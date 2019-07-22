@@ -1,20 +1,21 @@
 import { Json } from "../types/json";
 import { EventDictionary } from "../event-dictionary/event-dictionary";
 import { Observable, BehaviorSubject } from "rxjs";
-import { type } from "os";
 
 export class EventTree {
   observable = new BehaviorSubject<Json>({});
+  guid: string;
 
   private eventDictionary: EventDictionary;
   private tree: {[name: string]: EventTree | string | Json| Json[]} = {};
 
   constructor(eventDictionary: EventDictionary) {
     this.eventDictionary = eventDictionary;
+    this.guid = this.eventDictionary.addEvent(this.observable);
   }
 
   toJson(): Json {
-    const tree: Json = {};
+    const tree: Json = {_guid: this.guid};
     Object.keys(this.tree).forEach((branchName: string) => {
       const branch = this.tree[branchName];
       let branchContent;
@@ -30,7 +31,7 @@ export class EventTree {
 
   setEvent(name: string, event: Observable<Json[]>) {
     const guid =  this.eventDictionary.addEvent(event);
-    this.setValue(name, guid);
+    this.setValue(name, {_guid: guid});
   }
 
   setSubtree(name: string, subtree: EventTree) {

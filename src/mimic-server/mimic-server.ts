@@ -1,41 +1,42 @@
-import * as express from 'express';
 import { createServer, Server } from 'http';
-import * as socketIo from 'socket.io';
+import express = require("express");
+import socketIo = require("socket.io");
 
-import { PostgresToJsonService } from '../postgres-to-json/postgres-to-json.service';
 import { NamedParamClient } from '../named-param-client/named-param-client';
-import { DataAccessObject } from '../data-access-object/data-access-object';
-import { BehaviorSubject, Observable, Observer } from 'rxjs';
+import { BehaviorSubject, Observable, Observer, Subscription } from 'rxjs';
 import { filter, debounceTime } from 'rxjs/operators';
 import { EventDictionary } from '../event-dictionary/event-dictionary';
+import { ModuleClass } from '../types/module-cLass';
+import { ServerModule } from '../server-module/server-module';
+import { EventModule } from '../modules/event/event';
 
 export class MimicServer {
   private app = new BehaviorSubject<express.Application | null>(null);
-  private mimicClient: NamedParamClient | null = null;
+  private mimicClient?: NamedParamClient;
   private server?: Server;
   private io?: SocketIO.Server;
   private eventDict: EventDictionary;
 
-  constructor() {
+  constructor(private serverModuleClassList: ModuleClass[] = []) {
     this.eventDict = new EventDictionary();
     const app = express();
     this.listen(app);
   }
 
   getApp(): Observable<express.Application> {
-      return new Observable((observer: Observer<express.Application>) => {
-        this.app
+    return new Observable((observer: Observer<express.Application>) => {
+      this.app
         .pipe(filter((app: express.Application | null) => !!app))
         .subscribe((app: express.Application | null) => {
           if (app) observer.next(app);
         });
-      });
+    });
   }
 
   private async listen(app: express.Application) {
     this.mimicClient = await this.initDatabaseConnection();
-    const dataAccessObject = new DataAccessObject(this.mimicClient);
-    const postgresToJsonService = new PostgresToJsonService(dataAccessObject);
+    if (!this.mimicClient) return;
+    const mimicClient = this.mimicClient;
 
     app.use((_req, res, next) => {
       res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -43,33 +44,13 @@ export class MimicServer {
       res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
       res.setHeader('Access-Control-Allow-Credentials', 'true');
       next();
-    })
-
-    app.get('/dataset', async (_req, res) => {
-      let response: string;
-      const dataset = await postgresToJsonService.getDataset();
-      response = JSON.stringify(dataset);
-      res.send(response);
     });
 
-    app.get('/visit/:visitId', async (req, res) => {
-      const reqVisitId = req.params.visitId;
-      const visitId = Number(req.params.visitId);
-      let response: string;
-      if (isNaN(visitId)) {
-        res.status(400);
-        response = `Invalid visitId: ${reqVisitId}`;
-      } else {
-        const visit = await postgresToJsonService.getVisit(visitId, this.eventDict);
-        response = JSON.stringify(visit);
-      }
-      res.send(response);
-    });
-
-    app.get('/visits', async (_req, res) => {
-      const visit = await postgresToJsonService.getVisits();
-      const response = JSON.stringify(visit);
-      res.send(response);
+    const eventModule = new EventModule(app, this.eventDict);
+    eventModule.init();
+    this.serverModuleClassList.forEach((serverModuleClass: ModuleClass) => {
+      const serverModule = new serverModuleClass(app, mimicClient, this.eventDict);
+      serverModule.init();
     });
 
     this.server = createServer(app);
@@ -81,22 +62,24 @@ export class MimicServer {
 
     this.io.on('connect', (socket: SocketIO.Socket) => {
       console.log('new client connected');
+      const subscriptions: Subscription[] = [];
       socket.on('subscribe', (guid: string) => {
-        this.eventDict.getEvent(guid)
-        .pipe(debounceTime(500))
-        .subscribe((value) => {
-          console.log(value);
-          socket.emit('update', value);
-        });
+        const subscription = this.eventDict.getEvent(guid)
+          .pipe(debounceTime(500))
+          .subscribe((value) => {
+            socket.emit('update', { guid, value });
+          });
+        subscriptions.push(subscription);
       });
       socket.on('disconnect', () => {
-          console.log('Client disconnected');
+        console.log('Client disconnected');
+        subscriptions.forEach(subscription => subscription.unsubscribe());
       });
     });
     this.app.next(app);
   }
 
-  private async initDatabaseConnection() {
+  private async initDatabaseConnection(): Promise<NamedParamClient> {
     const host = process.env.mimicHost;
     const port = Number(process.env.mimicPort);
     const user = process.env.mimicUser;

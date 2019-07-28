@@ -4,8 +4,8 @@ import { Observable } from "rxjs";
 import { Json } from "../types/json";
 
 export class EventDictionary {
-  private eventDict: {[guid: string]: Observable<Json | Json[]>} = {};
-  constructor() {}
+  private eventDict: { [guid: string]: Observable<Json | Json[]> } = {};
+  constructor() { }
 
   addEvent(event: Observable<Json | Json[]>) {
     const guid = Guid.create().toString();

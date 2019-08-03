@@ -1,6 +1,6 @@
 import { from } from "rxjs";
 
-import { ServerModule } from "../../server-module/server-module";
+import { DataModule } from "../data-module/data-module";
 import express = require("express");
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
 import { VisitDao } from "./visit.dao";
@@ -8,14 +8,14 @@ import { NamedParamClient } from "../../named-param-client/named-param-client";
 import { validateVisit as validateVisitId } from "../../mixin/visit-validator";
 import { Request, Response } from "express-serve-static-core";
 
-export class VisitModule extends ServerModule {
+export class VisitModule extends DataModule {
   protected dataAccessObject: VisitDao;
 
   constructor(
     app: express.Application,
     client: NamedParamClient,
     eventDict: EventDictionary,
-    subModuleList?: ServerModule[]
+    subModuleList?: DataModule[]
   ) {
     super(
       app,

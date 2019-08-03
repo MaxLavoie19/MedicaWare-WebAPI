@@ -14,8 +14,14 @@ export class EventModule {
   init() {
     this.app.get('/event/:eventGuid', (req: Request, res: Response) => {
       const eventGuid = req.params.eventGuid;
-      const eventObservable = from(this.eventDict.getEvent(eventGuid));
+      const event = this.eventDict.getEvent(eventGuid);
       let response: string;
+      if (!event) {
+        response = `The event ${eventGuid} does not exist.`;
+        res.send(response);
+        return;
+      }
+      const eventObservable = from(event);
       let timeout: NodeJS.Timeout;
       const subscription = eventObservable.subscribe((value: Json | Json[]) => {
         response = JSON.stringify(value);

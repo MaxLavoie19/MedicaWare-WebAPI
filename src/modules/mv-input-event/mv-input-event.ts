@@ -2,14 +2,14 @@ import { from } from "rxjs";
 
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
-import { ServiceDao } from "./service.dao";
+import { MvInputEventDao } from "./mv-input-event.dao";
 import { NamedParamClient } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
 
-export class ServiceModule extends DataModule {
-  protected dataAccessObject: ServiceDao;
+export class MvInputEventModule extends DataModule {
+  protected dataAccessObject: MvInputEventDao;
 
   constructor(
     app: Application,
@@ -22,14 +22,14 @@ export class ServiceModule extends DataModule {
       eventDict,
       subModuleList
     );
-    this.dataAccessObject = new ServiceDao(client);
+    this.dataAccessObject = new MvInputEventDao(client);
   }
 
   init() {
-    this.app.get('/visit/:visitId/services', validateVisit, (request: Request, response: Response) => {
+    this.app.get('/visit/:visitId/mv-input-events', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
-      const visitServicesQueryObservable = from(this.dataAccessObject.fetchVisitServices(visitId));
-      const guid = this.eventDict.addEvent(visitServicesQueryObservable);
+      const mvInputEventsQueryObservable = from(this.dataAccessObject.fetchVisitMvInputEvents(visitId));
+      const guid = this.eventDict.addEvent(mvInputEventsQueryObservable);
       response.send({ guid });
     });
   }

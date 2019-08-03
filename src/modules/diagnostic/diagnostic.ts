@@ -2,14 +2,14 @@ import { from } from "rxjs";
 
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
-import { ServiceDao } from "./service.dao";
+import { DiagnosticDao } from "./diagnostic.dao";
 import { NamedParamClient } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
 
-export class ServiceModule extends DataModule {
-  protected dataAccessObject: ServiceDao;
+export class DiagnosticModule extends DataModule {
+  protected dataAccessObject: DiagnosticDao;
 
   constructor(
     app: Application,
@@ -22,14 +22,14 @@ export class ServiceModule extends DataModule {
       eventDict,
       subModuleList
     );
-    this.dataAccessObject = new ServiceDao(client);
+    this.dataAccessObject = new DiagnosticDao(client);
   }
 
   init() {
-    this.app.get('/visit/:visitId/services', validateVisit, (request: Request, response: Response) => {
+    this.app.get('/visit/:visitId/diagnostics', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
-      const visitServicesQueryObservable = from(this.dataAccessObject.fetchVisitServices(visitId));
-      const guid = this.eventDict.addEvent(visitServicesQueryObservable);
+      const diagnosticsQueryObservable = from(this.dataAccessObject.fetchVisitDiagnostics(visitId));
+      const guid = this.eventDict.addEvent(diagnosticsQueryObservable);
       response.send({ guid });
     });
   }

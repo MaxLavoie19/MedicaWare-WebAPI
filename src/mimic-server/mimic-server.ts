@@ -7,7 +7,7 @@ import { BehaviorSubject, Observable, Observer, Subscription } from 'rxjs';
 import { filter, debounceTime } from 'rxjs/operators';
 import { EventDictionary } from '../event-dictionary/event-dictionary';
 import { ModuleClass } from '../types/module-cLass';
-import { ServerModule } from '../server-module/server-module';
+import { DataModule } from '../modules/data-module/data-module';
 import { EventModule } from '../modules/event/event';
 
 export class MimicServer {

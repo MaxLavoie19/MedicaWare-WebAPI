@@ -7,9 +7,10 @@ import { Json } from "../../types/json";
 export class ServiceDao extends DataAccessObject {
   fetchVisitServices(admissionId: number): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
-        SELECT prev_service, curr_service
+        SELECT curr_service, transfertime
         FROM services
         WHERE hadm_id = $(admissionId)
+        ORDER BY transfertime
       `, { admissionId }));
   }
 }

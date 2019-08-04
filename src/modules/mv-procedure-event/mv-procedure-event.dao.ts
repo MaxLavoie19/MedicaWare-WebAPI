@@ -12,4 +12,13 @@ export class MvProcedureEventDao extends DataAccessObject {
         WHERE hadm_id = $(admissionId)
       `, { admissionId }));
   }
+  fetchVisitMvProcedureEventGroups(admissionId: number): Observable<Json[]> {
+    return from(this.client.namedParametersQuery(`
+        SELECT ordercategoryname, SUM(value), valueuom, COUNT(*)::text
+        FROM procedureevents_mv
+        WHERE hadm_id = $(admissionId)
+        GROUP BY valueuom, ordercategoryname
+
+      `, { admissionId }));
+  }
 }

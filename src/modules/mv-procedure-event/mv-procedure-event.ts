@@ -3,7 +3,7 @@ import { from } from "rxjs";
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
 import { MvProcedureEventDao } from "./mv-procedure-event.dao";
-import { NamedParamClient } from "../../named-param-client/named-param-client";
+import { NamedParamClientPool } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
@@ -13,7 +13,7 @@ export class MvProcedureEventModule extends DataModule {
 
   constructor(
     app: Application,
-    client: NamedParamClient,
+    client: NamedParamClientPool,
     eventDict: EventDictionary,
     subModuleList?: DataModule[]
   ) {
@@ -30,6 +30,12 @@ export class MvProcedureEventModule extends DataModule {
       const visitId = Number(request.params.visitId);
       const mvProcedureEventsQueryObservable = from(this.dataAccessObject.fetchVisitMvProcedureEvents(visitId));
       const guid = this.eventDict.addEvent(mvProcedureEventsQueryObservable);
+      response.send({ guid });
+    });
+    this.app.get('/visit/:visitId/mv-procedure-event-groups', validateVisit, (request: Request, response: Response) => {
+      const visitId = Number(request.params.visitId);
+      const mvProcedureEventGroupsQueryObservable = from(this.dataAccessObject.fetchVisitMvProcedureEventGroups(visitId));
+      const guid = this.eventDict.addEvent(mvProcedureEventGroupsQueryObservable);
       response.send({ guid });
     });
   }

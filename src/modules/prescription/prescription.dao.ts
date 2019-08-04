@@ -12,4 +12,12 @@ export class PrescriptionDao extends DataAccessObject {
         WHERE hadm_id = $(admissionId)
       `, { admissionId }));
   }
+  fetchVisitPrescriptionGroups(admissionId: number): Observable<Json[]> {
+    return from(this.client.namedParametersQuery(`
+        SELECT drug, COUNT(*)::text, dose_val_rx, dose_unit_rx, route
+        FROM prescriptions
+        WHERE hadm_id = $(admissionId)
+        GROUP BY drug, dose_unit_rx, route, dose_val_rx
+      `, { admissionId }));
+  }
 }

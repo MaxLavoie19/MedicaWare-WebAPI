@@ -13,4 +13,13 @@ export class CvInputEventDao extends DataAccessObject {
         WHERE in_cv.hadm_id = $(admissionId)
       `, { admissionId }));
   }
+  fetchVisitCvInputEventGroups(admissionId: number): Observable<Json[]> {
+    return from(this.client.namedParametersQuery(`
+        SELECT SUM(in_cv.amount), COUNT(*)::text, in_cv.amountuom, itm.label
+        FROM inputevents_cv AS in_cv
+        JOIN d_items AS itm ON itm.itemid = in_cv.itemid
+        WHERE in_cv.hadm_id = $(admissionId) AND COALESCE(in_cv.amount, 0) > 0
+        GROUP BY itm.label, in_cv.amountuom
+      `, { admissionId }));
+  }
 }

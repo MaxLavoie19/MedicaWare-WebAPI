@@ -14,4 +14,14 @@ export class MvInputEventDao extends DataAccessObject {
         WHERE in_mv.hadm_id = $(admissionId)
       `, { admissionId }));
   }
+  fetchVisitMvInputEventGroups(admissionId: number): Observable<Json[]> {
+    return from(this.client.namedParametersQuery(`
+        SELECT SUM(in_mv.amount), in_mv.amountuom, in_mv.ordercategoryname, in_mv.patientweight, itm.label
+        FROM inputevents_mv AS in_mv
+        JOIN d_items AS itm ON itm.itemid = in_mv.itemid
+        WHERE in_mv.hadm_id = $(admissionId)
+        GROUP BY itm.label, in_mv.ordercategoryname, in_mv.patientweight, in_mv.amountuom
+
+      `, { admissionId }));
+  }
 }

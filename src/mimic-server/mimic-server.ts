@@ -2,17 +2,17 @@ import { createServer, Server } from 'http';
 import express = require("express");
 import socketIo = require("socket.io");
 
-import { NamedParamClient } from '../named-param-client/named-param-client';
+import { NamedParamClientPool } from '../named-param-client/named-param-client';
 import { BehaviorSubject, Observable, Observer, Subscription } from 'rxjs';
 import { filter, debounceTime } from 'rxjs/operators';
 import { EventDictionary } from '../event-dictionary/event-dictionary';
-import { ModuleClass } from '../types/module-cLass';
+import { ModuleClass } from '../types/module-class';
 import { DataModule } from '../modules/data-module/data-module';
 import { EventModule } from '../modules/event/event';
 
 export class MimicServer {
   private app = new BehaviorSubject<express.Application | null>(null);
-  private mimicClient?: NamedParamClient;
+  private mimicClient?: NamedParamClientPool;
   private server?: Server;
   private io?: SocketIO.Server;
   private eventDict: EventDictionary;
@@ -64,6 +64,7 @@ export class MimicServer {
       console.log('new client connected');
       const subscriptions: Subscription[] = [];
       socket.on('subscribe', (guid: string) => {
+        console.log(`Client subscribed to ${guid}`);
         const subscription = this.eventDict.getEvent(guid)
           .pipe(debounceTime(500))
           .subscribe((value) => {
@@ -79,15 +80,16 @@ export class MimicServer {
     this.app.next(app);
   }
 
-  private async initDatabaseConnection(): Promise<NamedParamClient> {
+  private async initDatabaseConnection(): Promise<NamedParamClientPool> {
     const host = process.env.mimicHost;
     const port = Number(process.env.mimicPort);
     const user = process.env.mimicUser;
     const database = process.env.mimicDatabase;
     const password = process.env.mimicPassword;
 
-    const mimicClient = new NamedParamClient({ host, port, user, database, password });
-    await mimicClient.connect();
-    return mimicClient;
+    const mimicClientPool = new NamedParamClientPool(
+      { host, port, user, database, password }, { max: 10 }
+    );
+    return mimicClientPool;
   }
 }

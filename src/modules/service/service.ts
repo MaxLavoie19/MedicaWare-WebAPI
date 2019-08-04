@@ -3,7 +3,7 @@ import { from } from "rxjs";
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
 import { ServiceDao } from "./service.dao";
-import { NamedParamClient } from "../../named-param-client/named-param-client";
+import { NamedParamClientPool } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
@@ -13,7 +13,7 @@ export class ServiceModule extends DataModule {
 
   constructor(
     app: Application,
-    client: NamedParamClient,
+    client: NamedParamClientPool,
     eventDict: EventDictionary,
     subModuleList?: DataModule[]
   ) {

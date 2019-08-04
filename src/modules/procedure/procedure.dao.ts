@@ -13,4 +13,13 @@ export class ProcedureDao extends DataAccessObject {
         WHERE proc_icd.hadm_id = $(admissionId)
       `, { admissionId }));
   }
+  fetchVisitProcedureGroups(admissionId: number): Observable<Json[]> {
+    return from(this.client.namedParametersQuery(`
+        SELECT proc_icd.icd9_code, icd_proc.long_title, COUNT(*)::text
+        FROM procedures_icd AS proc_icd
+        JOIN d_icd_procedures icd_proc ON icd_proc.icd9_code = proc_icd.icd9_code
+        WHERE proc_icd.hadm_id = $(admissionId)
+        GROUP BY proc_icd.icd9_code, icd_proc.long_title
+      `, { admissionId }));
+  }
 }

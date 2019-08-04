@@ -1,8 +1,8 @@
 import { Json } from "../types/json";
-import { NamedParamClient } from "../named-param-client/named-param-client";
+import { NamedParamClientPool } from "../named-param-client/named-param-client";
 
 export class DataAccessObject {
-  constructor(protected client: NamedParamClient) { }
+  constructor(protected client: NamedParamClientPool) { }
 
   async getRow(tableName: string, rowId: number): Promise<Json> {
     const queryResult = await this.client.namedParametersQuery(`

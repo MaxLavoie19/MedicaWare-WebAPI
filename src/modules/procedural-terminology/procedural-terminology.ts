@@ -3,7 +3,7 @@ import { from } from "rxjs";
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
 import { ProceduralTerminologyDao } from "./procedural-terminology.dao";
-import { NamedParamClient } from "../../named-param-client/named-param-client";
+import { NamedParamClientPool } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
@@ -13,7 +13,7 @@ export class ProceduralTerminologyModule extends DataModule {
 
   constructor(
     app: Application,
-    client: NamedParamClient,
+    client: NamedParamClientPool,
     eventDict: EventDictionary,
     subModuleList?: DataModule[]
   ) {
@@ -26,7 +26,7 @@ export class ProceduralTerminologyModule extends DataModule {
   }
 
   init() {
-    this.app.get('/visit/:visitId/procedural-terminologys', validateVisit, (request: Request, response: Response) => {
+    this.app.get('/visit/:visitId/procedural-terminologies', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
       const proceduralTerminologysQueryObservable = from(this.dataAccessObject.fetchVisitProceduralTerminologys(visitId));
       const guid = this.eventDict.addEvent(proceduralTerminologysQueryObservable);

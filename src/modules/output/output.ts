@@ -3,7 +3,7 @@ import { from } from "rxjs";
 import { DataModule } from "../data-module/data-module";
 import { EventDictionary } from "../../event-dictionary/event-dictionary";
 import { OutputDao } from "./output.dao";
-import { NamedParamClient } from "../../named-param-client/named-param-client";
+import { NamedParamClientPool } from "../../named-param-client/named-param-client";
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
@@ -13,7 +13,7 @@ export class OutputModule extends DataModule {
 
   constructor(
     app: Application,
-    client: NamedParamClient,
+    client: NamedParamClientPool,
     eventDict: EventDictionary,
     subModuleList?: DataModule[]
   ) {
@@ -30,6 +30,12 @@ export class OutputModule extends DataModule {
       const visitId = Number(request.params.visitId);
       const outputsQueryObservable = from(this.dataAccessObject.fetchVisitOutputs(visitId));
       const guid = this.eventDict.addEvent(outputsQueryObservable);
+      response.send({ guid });
+    });
+    this.app.get('/visit/:visitId/output-groups', validateVisit, (request: Request, response: Response) => {
+      const visitId = Number(request.params.visitId);
+      const outputGroupsQueryObservable = from(this.dataAccessObject.fetchVisitOutputGroups(visitId));
+      const guid = this.eventDict.addEvent(outputGroupsQueryObservable);
       response.send({ guid });
     });
   }

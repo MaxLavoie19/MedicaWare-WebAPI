@@ -7,7 +7,7 @@ import { Json } from "../../types/json";
 export class MicrobiologyDao extends DataAccessObject {
   fetchVisitMicrobiologys(admissionId: number): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
-        SELECT bio.spec_type_desc, bio.org_name, bio.org_name, itm.label
+        SELECT bio.spec_type_desc, itm.label
         FROM microbiologyevents AS bio
         JOIN d_items AS itm ON itm.itemid = bio.org_itemid
         WHERE bio.hadm_id = $(admissionId)

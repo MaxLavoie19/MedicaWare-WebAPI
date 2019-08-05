@@ -15,18 +15,19 @@ export class ChartEventDao extends DataAccessObject {
   }
   fetchVisitChartEventTypes(admissionId: number): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
-        SELECT DISTINCT itm.label
+        SELECT DISTINCT itm.label, chrt.itemid
         FROM chartevents AS chrt
         JOIN d_items AS itm ON itm.itemid = chrt.itemid
         WHERE chrt.hadm_id = $(admissionId)
+        ORDER BY itm.label
       `, { admissionId }));
   }
-  fetchVisitChartEventsByType(admissionId: number, type: string): Observable<Json[]> {
+  fetchVisitChartEventsByType(admissionId: number, itemId: string): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
         SELECT chrt.charttime, chrt.valuenum, chrt.valueuom
         FROM chartevents AS chrt
-        JOIN d_items AS itm ON itm.itemid = chrt.itemid
-        WHERE chrt.hadm_id = $(admissionId) AND itm.label = $(type)
-      `, { admissionId, type }));
+        WHERE chrt.hadm_id = $(admissionId) AND chrt.itemid = $(itemId)
+        ORDER BY chrt.charttime
+      `, { admissionId, itemId }));
   }
 }

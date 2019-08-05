@@ -7,6 +7,7 @@ import { NamedParamClientPool } from "../../named-param-client/named-param-clien
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
+import { decode } from "base-64";
 
 export class ChartEventModule extends DataModule {
   protected dataAccessObject: ChartEventDao;
@@ -38,10 +39,10 @@ export class ChartEventModule extends DataModule {
       const guid = this.eventDict.addEvent(chartEventTypesQueryObservable);
       response.send({ guid });
     });
-    this.app.get('/visit/:visitId/chart-events/type/:type', validateVisit, (request: Request, response: Response) => {
+    this.app.get('/visit/:visitId/chart-events/item-id/:itemId', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
-      const type = request.params.type;
-      const chartEventQueryObservable = from(this.dataAccessObject.fetchVisitChartEventsByType(visitId, type));
+      const itemId = request.params.itemId;
+      const chartEventQueryObservable = from(this.dataAccessObject.fetchVisitChartEventsByType(visitId, itemId));
       const guid = this.eventDict.addEvent(chartEventQueryObservable);
       response.send({ guid });
     });

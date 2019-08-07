@@ -88,7 +88,7 @@ export class MimicServer {
     const password = process.env.mimicPassword;
 
     const mimicClientPool = new NamedParamClientPool(
-      { host, port, user, database, password }, { max: 10 }
+      { host, port, user, database, password }, { max: 10, testOnBorrow: true }
     );
     return mimicClientPool;
   }

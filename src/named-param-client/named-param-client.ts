@@ -1,4 +1,4 @@
-import { Client, Configuration, Value, Result, Connect } from "ts-postgres";
+import { Client, Configuration, Value, Result } from "ts-postgres";
 import { createPool, Pool, Options } from 'generic-pool';
 import { Json } from "../types/json";
 
@@ -20,6 +20,9 @@ export class NamedParamClientPool {
         client.on('error', console.log);
         await client.connect();
         return client;
+      },
+      validate: (client: Client) => {
+        return Promise.resolve(!client.closed);
       },
       destroy: async (client: Client) => {
         await client.end();

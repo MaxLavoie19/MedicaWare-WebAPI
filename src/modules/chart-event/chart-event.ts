@@ -7,7 +7,6 @@ import { NamedParamClientPool } from "../../named-param-client/named-param-clien
 import { validateVisit } from "../../mixin/visit-validator";
 import { Application, Response } from "express";
 import { Request } from "express-serve-static-core";
-import { decode } from "base-64";
 
 export class ChartEventModule extends DataModule {
   protected dataAccessObject: ChartEventDao;
@@ -29,13 +28,23 @@ export class ChartEventModule extends DataModule {
   init() {
     this.app.get('/visit/:visitId/chart-events', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
-      const chartEventsQueryObservable = from(this.dataAccessObject.fetchVisitChartEvents(visitId));
-      const guid = this.eventDict.addEvent(chartEventsQueryObservable);
+      const dataType = request.query.dataType;
+      const onlyLimit = request.query.onlyLimit;
+      let chartEventQueryObservable;
+      if (onlyLimit) {
+        chartEventQueryObservable = from(this.dataAccessObject.fetchVisitLinearChartEventsMinMax(visitId));
+      } else if (dataType === 'discrete') {
+        chartEventQueryObservable = from(this.dataAccessObject.fetchVisitDiscreteChartEvents(visitId));
+      } else {
+        chartEventQueryObservable = from(this.dataAccessObject.fetchVisitChartEvents(visitId));
+      }
+      const guid = this.eventDict.addEvent(chartEventQueryObservable);
       response.send({ guid });
     });
     this.app.get('/visit/:visitId/chart-event-types', validateVisit, (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
-      const chartEventTypesQueryObservable = from(this.dataAccessObject.fetchVisitChartEventTypes(visitId));
+      const dataType = request.query.dataType;
+      const chartEventTypesQueryObservable = from(this.dataAccessObject.fetchVisitChartEventTypes(visitId, dataType));
       const guid = this.eventDict.addEvent(chartEventTypesQueryObservable);
       response.send({ guid });
     });

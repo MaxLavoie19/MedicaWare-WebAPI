@@ -8,8 +8,8 @@ export class VisitDao extends DataAccessObject {
   fetchVisit(visitId: number): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
       SELECT adm.hadm_id, adm.admission_type, adm.marital_status, adm.ethnicity,
-        adm.diagnosis, adm.dischtime - adm.admittime AS length_of_stay, pat.gender, pat.dob,
-        pat.dod,
+        adm.diagnosis, EXTRACT(DAY FROM(adm.dischtime - adm.admittime))::varchar AS length_of_stay, pat.gender,
+        pat.dob, EXTRACT(YEAR FROM AGE(adm.admittime, pat.dob))::varchar AS age, pat.dod,
         COALESCE(pat.dod < adm.admittime + interval '1 month', false) AS died_within_a_month,
         stays.last_careunit
       FROM admissions AS adm

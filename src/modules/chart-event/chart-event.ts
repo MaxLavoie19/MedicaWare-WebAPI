@@ -26,10 +26,14 @@ export class ChartEventModule extends DataModule {
   }
 
   init() {
-    this.app.get('/visit/:visitId/chart-events', validateVisit, (request: Request, response: Response) => {
+    this.app.get('/visit/:visitId/chart-events', validateVisit, async (request: Request, response: Response) => {
       const visitId = Number(request.params.visitId);
       const dataType = request.query.dataType;
-      const onlyLimit = request.query.onlyLimit;
+      const onlyLimitString = request.query.onlyLimit;
+      let onlyLimit = false;
+      if (onlyLimitString) {
+        onlyLimit = JSON.parse(onlyLimitString);
+      }
       let chartEventQueryObservable;
       if (onlyLimit) {
         chartEventQueryObservable = from(this.dataAccessObject.fetchVisitLinearChartEventsMinMax(visitId));

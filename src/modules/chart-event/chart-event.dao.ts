@@ -57,23 +57,28 @@ export class ChartEventDao extends DataAccessObject {
   }
   fetchVisitLinearChartEventsMinMax(admissionId: number): Observable<Json[]> {
     return from(this.client.namedParametersQuery(`
-        SELECT DISTINCT valuenum, itm.label, charttime, valueuom, stopped, resultstatus
-        FROM chartevents chrt
-        JOIN d_items AS itm ON itm.itemid = chrt.itemid
-        WHERE chrt.hadm_id = $(admissionId)
-          AND (
+        SELECT label, charttime, valuenum, valueuom, stopped, resultstatus
+        FROM (
+		      SELECT DISTINCT ON (valuenum) valuenum,
+        	  itm.label, charttime, valueuom, stopped, resultstatus
+          FROM chartevents chrt
+          JOIN d_items AS itm ON itm.itemid = chrt.itemid
+          WHERE chrt.hadm_id = $(admissionId)
+            AND (
               valuenum = (
-              SELECT MIN(valuenum)
-              FROM chartevents
-              WHERE hadm_id = chrt.hadm_id AND itemid = chrt.itemid AND valuenum IS NOT NULL
+                SELECT MIN(valuenum)
+                FROM chartevents
+                WHERE hadm_id = chrt.hadm_id AND itemid = chrt.itemid AND valuenum IS NOT NULL
+              )
+              OR  valuenum = (
+                SELECT MAX(valuenum)
+                FROM chartevents
+                WHERE hadm_id = chrt.hadm_id AND itemid = chrt.itemid AND valuenum IS NOT NULL
+              )
             )
-            OR  valuenum = (
-              SELECT MAX(valuenum)
-              FROM chartevents
-              WHERE hadm_id = chrt.hadm_id AND itemid = chrt.itemid AND valuenum IS NOT NULL
-            )
-          )
-        ORDER BY itm.label, charttime
+            ORDER BY valuenum, charttime
+          ) limits
+        ORDER BY label, charttime
       `, { admissionId }));
   }
 }
